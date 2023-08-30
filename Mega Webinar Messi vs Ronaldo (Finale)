@@ -1,0 +1,2084 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Mega Webinar - Messi vs Ronaldo (Finale)",
+      "provenance": [],
+      "collapsed_sections": [
+        "8mAucUz7leEc",
+        "uN5mt05-jG6o",
+        "H9esDzllNQFb",
+        "Ng5RxB6ANaap",
+        "YE40N2ZUNivO",
+        "w6t6uSz3BMHB",
+        "weSqMippgqzU",
+        "u68TinXtgVxN",
+        "mW_tfaHbNTFi",
+        "deyEPp0r18AT",
+        "T_GeVFz31_OT",
+        "EtCVVd1nhndi",
+        "w21Hy21O2G3h",
+        "tQNyOpVX2Qhu",
+        "7ouEFcpRPwNS",
+        "c5AtNbgZIgzt"
+      ]
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "EqQRI7c6fNo_"
+      },
+      "source": [
+        "# Messi vs Ronaldo - An Analytical Debate"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8mAucUz7leEc"
+      },
+      "source": [
+        "## **Notes for mega-webinar**\n",
+        "- We will focus purely on the analytical process here and not on python.\n",
+        "- This notebook will be shared after the session has been concluded.\n",
+        "- Keep the chatter and banter to the minimum on the chat window and let's focus on the topic on-hand :)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uN5mt05-jG6o"
+      },
+      "source": [
+        "## **Important tips and tricks for Football Analytics**\n",
+        "1. Analytics is a marathon and not a sprint\n",
+        "1. Conclusions are dangerous. Analytically-supported observations and opinions are true outputs of football analysis.\n",
+        "1. Start from the broadest level possible and then start digging in.\n",
+        "1. Improve your typing speed"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "UnZ7IlBIfZYd"
+      },
+      "source": [
+        "## Flow of the Webinar:\n",
+        "1. Get data from [Understat](https://understat.com/) for Messi and Ronaldo\n",
+        "3. Data Cleaning and EDA\n",
+        "3. Comparative Analysis\n",
+        "3. **Debate - 2 Rounds**\n",
+        "3. Shot Analysis\n",
+        "2. Distance Analysis\n",
+        "3. The Final comparison\n",
+        "3. **Debate - 3rd Round**\n",
+        "3. Who Won?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "DQDRPOiOC5pJ"
+      },
+      "source": [
+        "# Import required libraries:\n",
+        "import json\n",
+        "import pandas as pd\n",
+        "from bs4 import BeautifulSoup\n",
+        "from urllib.request import urlopen\n",
+        "\n",
+        "# Import plotting libraries:\n",
+        "import plotly.express as px\n",
+        "import plotly.graph_objects as go\n",
+        "from plotly.subplots import make_subplots"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5O_d1MnsK1Sg"
+      },
+      "source": [
+        "# Get that Data!"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "INfOvi6ELS7y"
+      },
+      "source": [
+        "## Cristiano Ronaldo"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BLwgTYD9K_i3"
+      },
+      "source": [
+        "### Season-wise data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "m5tSJPhkDBku"
+      },
+      "source": [
+        "# Scrape Cristiano player stats:\n",
+        "cris_scrape_url = \"https://understat.com/player/2371\"\n",
+        "page_connect = urlopen(cris_scrape_url)\n",
+        "page_html = BeautifulSoup(page_connect, \"html.parser\")\n",
+        "\n",
+        "json_raw_string = page_html.findAll(name=\"script\")[1].text\n",
+        "start_ind = json_raw_string.index(\"\\\\\")\n",
+        "stop_ind = json_raw_string.index(\"')\")\n",
+        "\n",
+        "json_data = json_raw_string[start_ind:stop_ind]\n",
+        "json_data = json_data.encode(\"utf8\").decode(\"unicode_escape\")\n",
+        "\n",
+        "cris_season_wise_meta_df = pd.json_normalize(json.loads(json_data)[\"season\"])\n",
+        "cris_season_wise_meta_df.insert(0, \"Player\", \"Cristiano\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "laj-UbBcsdFZ"
+      },
+      "source": [
+        "cris_season_wise_meta_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zdMVvsSfMJvh"
+      },
+      "source": [
+        "### Shots Data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "N-yL-WXuLGWS"
+      },
+      "source": [
+        "# Scrape Cristiano shot data:\n",
+        "json_raw_string = page_html.findAll(name=\"script\")[3].text\n",
+        "start_ind = json_raw_string.index(\"\\\\\")\n",
+        "stop_ind = json_raw_string.index(\"')\")\n",
+        "\n",
+        "json_data = json_raw_string[start_ind:stop_ind]\n",
+        "json_data = json_data.encode(\"utf8\").decode(\"unicode_escape\")\n",
+        "\n",
+        "cris_shots_df = pd.json_normalize(json.loads(json_data))\n",
+        "cris_shots_df.insert(0, \"Player\", \"Cristiano\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "jj46puIdlJRj"
+      },
+      "source": [
+        "cris_shots_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_eBhCV6QY15u"
+      },
+      "source": [
+        "cris_shots_df.shape"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TZwEH9F7L4m4"
+      },
+      "source": [
+        "## Messi"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "F_MaMIGtMUfd"
+      },
+      "source": [
+        "### Season-wise data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "jAP7siQLzF83"
+      },
+      "source": [
+        "# Scrape Messi player stats:\n",
+        "messi_scrape_url = \"https://understat.com/player/2097\"\n",
+        "page_connect = urlopen(messi_scrape_url)\n",
+        "page_html = BeautifulSoup(page_connect, \"html.parser\")\n",
+        "\n",
+        "json_raw_string = page_html.findAll(name=\"script\")[1].text\n",
+        "start_ind = json_raw_string.index(\"\\\\\")\n",
+        "stop_ind = json_raw_string.index(\"')\")\n",
+        "\n",
+        "json_data = json_raw_string[start_ind:stop_ind]\n",
+        "json_data = json_data.encode(\"utf8\").decode(\"unicode_escape\")\n",
+        "\n",
+        "messi_season_wise_meta_df = pd.json_normalize(json.loads(json_data)[\"season\"])\n",
+        "messi_season_wise_meta_df.insert(0, \"Player\", \"Messi\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "jVEgs2dwuRtT"
+      },
+      "source": [
+        "messi_season_wise_meta_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jM_xLN12LD2Z"
+      },
+      "source": [
+        "### Shots Data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "XH0onYm5LeH5"
+      },
+      "source": [
+        "# Scrape Messi shot data:\n",
+        "json_raw_string = page_html.findAll(name=\"script\")[3].text\n",
+        "start_ind = json_raw_string.index(\"\\\\\")\n",
+        "stop_ind = json_raw_string.index(\"')\")\n",
+        "\n",
+        "json_data = json_raw_string[start_ind:stop_ind]\n",
+        "json_data = json_data.encode(\"utf8\").decode(\"unicode_escape\")\n",
+        "\n",
+        "messi_shots_df = pd.json_normalize(json.loads(json_data))\n",
+        "messi_shots_df.insert(0, \"Player\", \"Messi\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "JBdouCDyRp8g"
+      },
+      "source": [
+        "messi_shots_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "wOX-pcp1Mfpr"
+      },
+      "source": [
+        "## Build Final Season-level and shots data"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "iH4XRxcsMlKd"
+      },
+      "source": [
+        "### Joint Season-wise Data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VesLmfFZfZdk"
+      },
+      "source": [
+        "season_wise_meta_df = cris_season_wise_meta_df.append(messi_season_wise_meta_df)\n",
+        "season_wise_meta_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "6uqbrC7tMs2C"
+      },
+      "source": [
+        "### Joint Shots Data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mPkt51l9MyI_"
+      },
+      "source": [
+        "shots_df = cris_shots_df.append(messi_shots_df)\n",
+        "shots_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MHGrRi95HIRw"
+      },
+      "source": [
+        "### Remove current season data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_deZgUkwHNtr"
+      },
+      "source": [
+        "season_wise_meta_df = season_wise_meta_df[season_wise_meta_df[\"season\"] != \"2021\"].copy(deep=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "EnfS4B72Haju"
+      },
+      "source": [
+        "shots_df = shots_df[shots_df[\"season\"] != \"2021\"].copy(deep=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "eZm77_pnRTmL"
+      },
+      "source": [
+        "season_wise_meta_df[\"season\"].unique()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vwNZX1BzRbf2"
+      },
+      "source": [
+        "shots_df[\"season\"].unique()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "H9esDzllNQFb"
+      },
+      "source": [
+        "# Data Cleaning and EDA"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ng5RxB6ANaap"
+      },
+      "source": [
+        "## On Season-wise data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Qyc-mxFfcd66"
+      },
+      "source": [
+        "season_wise_meta_df.describe(include=\"all\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ooqqC-imvhXr"
+      },
+      "source": [
+        "season_wise_meta_df.info()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "IxWn08jlMR7E"
+      },
+      "source": [
+        "season_wise_meta_df[\"goals\"].sum()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "2zQI96K7F0R4"
+      },
+      "source": [
+        "type(season_wise_meta_df[\"goals\"].sum())"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "fbRMm4n8O2A4"
+      },
+      "source": [
+        "season_wise_meta_df.apply(pd.to_numeric, errors=\"ignore\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "DpN4MEubtZsF"
+      },
+      "source": [
+        "season_wise_meta_df = season_wise_meta_df.apply(pd.to_numeric, errors=\"ignore\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "uvx01FHYSgoK"
+      },
+      "source": [
+        "season_wise_meta_df.info()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "qmgim04tSjeG"
+      },
+      "source": [
+        "season_wise_meta_df[\"goals\"].sum()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "NeC192_htS9E"
+      },
+      "source": [
+        "type(season_wise_meta_df[\"goals\"].sum())"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "KLMjOPRP1NFX"
+      },
+      "source": [
+        "season_wise_meta_df = season_wise_meta_df.round(2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "o1y868Zeh2Qr"
+      },
+      "source": [
+        "season_wise_meta_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "UR0yEmdi4Tbv"
+      },
+      "source": [
+        "season_wise_meta_df.describe(percentiles=[]).round(1)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "hWTQkC2J6x3i"
+      },
+      "source": [
+        "shots_df.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "uv7tAAOBsiy8"
+      },
+      "source": [
+        "season_wise_meta_df.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "2owv0LFFOwRT"
+      },
+      "source": [
+        "pd.set_option(\"display.max_rows\", 120)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Z7ySoiV02t90"
+      },
+      "source": [
+        "season_wise_meta_df.groupby([\"Player\"]).describe(percentiles=[]).T.round(1)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YE40N2ZUNivO"
+      },
+      "source": [
+        "## On Shots data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "9t4Xln5oNo2q"
+      },
+      "source": [
+        "shots_df.info()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "oAAfNgjVNo2s"
+      },
+      "source": [
+        "shots_df = shots_df.apply(pd.to_numeric, errors=\"ignore\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "abYRgXpPDexL"
+      },
+      "source": [
+        "shots_df.info()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "OX8leDOFNo2s"
+      },
+      "source": [
+        "shots_df = shots_df.round(2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "MaPoPybxNo2s"
+      },
+      "source": [
+        "shots_df.describe(percentiles=[]).round(1)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "UlPwlmcpMtKW"
+      },
+      "source": [
+        "### xG explainer"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "99-5uDEm2b0p"
+      },
+      "source": [
+        "shots_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "t8mw_I71G543"
+      },
+      "source": [
+        "season_wise_meta_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "niRBAnpIgfbq"
+      },
+      "source": [
+        "# Comparative Analysis"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "eZ10buk_M0w2"
+      },
+      "source": [
+        "## On Season-wise Data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "YpTWKqZtQPzs"
+      },
+      "source": [
+        "season_wise_meta_df.select_dtypes(exclude=[object]).columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "cnJ6izyhST6v"
+      },
+      "source": [
+        "num_cols = season_wise_meta_df.select_dtypes(exclude=[object]).columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "xTZLPsedIvJ6"
+      },
+      "source": [
+        "num_cols"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VMYCZGuIXuzj"
+      },
+      "source": [
+        "num_cols.__len__()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "8VXj-jOMX0kH"
+      },
+      "source": [
+        "len(num_cols)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "FTn56RlS-lfZ"
+      },
+      "source": [
+        "### Feature Engineering"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "yvjUTYWq2Fwn"
+      },
+      "source": [
+        "season_wise_meta_df.columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1-Jw7xcC9no6"
+      },
+      "source": [
+        "season_wise_meta_df[\"xGDiff\"] = season_wise_meta_df[\"goals\"].sub(season_wise_meta_df[\"xG\"]).round(2)\n",
+        "\n",
+        "season_wise_meta_df[\"goal_contrib\"] = season_wise_meta_df[\"goals\"].add(season_wise_meta_df[\"assists\"]).round(1)\n",
+        "\n",
+        "season_wise_meta_df[\"xgoal_contrib\"] = season_wise_meta_df[\"xG\"].add(season_wise_meta_df[\"xA\"]).round(1)\n",
+        "\n",
+        "season_wise_meta_df[\"shot_contrib\"] = season_wise_meta_df[[\"shots\", \"key_passes\", \"assists\"]].sum(axis=1).round(1)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "i0B5L22z--eA"
+      },
+      "source": [
+        "num_cols = num_cols.tolist() + [\"xGDiff\", \"goal_contrib\", \"xgoal_contrib\", \"shot_contrib\"]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1g-ZDf-L_1qV"
+      },
+      "source": [
+        "num_cols"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BgzxkY7w_OJN"
+      },
+      "source": [
+        "num_cols = [col for col in num_cols if col not in [\"season\", \"yellow\", \"red\", \"games\"]]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Jcc23rhDgMZK"
+      },
+      "source": [
+        "num_cols"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mYygfKEL-zsM"
+      },
+      "source": [
+        "total_df = season_wise_meta_df.groupby([\"Player\"])[num_cols].sum().round(1).reset_index()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "xzmWVSI5_M8c"
+      },
+      "source": [
+        "num_cols.__len__()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7NyVmRbAgjYT"
+      },
+      "source": [
+        "### CA on Totals (Consolidated data for all seasons per player)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "dd4dwj2wXkmd"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=3, cols=5,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=num_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in num_cols:\n",
+        "    fig.add_trace(go.Bar(x=total_df[\"Player\"],\n",
+        "                        y=total_df[col],\n",
+        "                        text=total_df[col],\n",
+        "                        textposition=\"inside\",\n",
+        "                        name=col),\n",
+        "                row=i, col=j)\n",
+        "    j += 1\n",
+        "    if j > 5:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=800)\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Iwwy_yFRaN0m"
+      },
+      "source": [
+        "NOTE: On xGChain and xGBuildup \\\\\n",
+        "xGChain --> Calculating xG for possessions that lead to a shot where the player was involved at least once in that possession, **INCLUDING** the final pass or the shot. \\\\\n",
+        "xGBuildup --> Calculating xG for possessions that lead to a shot where the player was involved at least once in that possession, **EXCLUDING** the final pass or the shot. \\\\"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tsEzkEw62BI6"
+      },
+      "source": [
+        "### Per 90 Stats"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "o5XrKg9u-b8c"
+      },
+      "source": [
+        "for col in num_cols:\n",
+        "    total_df[col + \"_p90\"] = total_df[col].divide(total_df[\"time\"]).multiply(90).round(2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3S80pczpCW72"
+      },
+      "source": [
+        "per_90_cols = [col + \"_p90\" for col in num_cols if col != \"time\"]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "W8jE1iGfChVb"
+      },
+      "source": [
+        "len(per_90_cols)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "w6t6uSz3BMHB"
+      },
+      "source": [
+        "### CA on Totals - Updated"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "eCJ1AbENCfQT"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=3, cols=5,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=per_90_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in per_90_cols:\n",
+        "    fig.add_trace(go.Bar(x=total_df[\"Player\"],\n",
+        "                        y=total_df[col],\n",
+        "                        text=total_df[col],\n",
+        "                        textposition=\"inside\",\n",
+        "                        name=col),\n",
+        "                row=i, col=j)\n",
+        "    j += 1\n",
+        "    if j > 5:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=800)\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "weSqMippgqzU"
+      },
+      "source": [
+        "### CA on Season-wise stats (Consolidated data per season per player)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "w8vXKosbb1i-"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=3, cols=5,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=num_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in num_cols:\n",
+        "    cris_plot_data = season_wise_meta_df.loc[season_wise_meta_df[\"Player\"] == \"Cristiano\"]\n",
+        "    fig.add_trace(go.Bar(x=cris_plot_data[\"season\"],\n",
+        "                         y=cris_plot_data[col],\n",
+        "                         text=cris_plot_data[col],\n",
+        "                         textposition=\"inside\",\n",
+        "                         name=col + \"(Cris)\"),\n",
+        "                row=i, col=j)\n",
+        "    messi_plot_data = season_wise_meta_df.loc[season_wise_meta_df[\"Player\"] == \"Messi\"]\n",
+        "    fig.add_trace(go.Bar(x=messi_plot_data[\"season\"],\n",
+        "                        y=messi_plot_data[col],\n",
+        "                        text=messi_plot_data[col],\n",
+        "                        textposition=\"inside\",\n",
+        "                        name=col + \"(Messi)\"),\n",
+        "            row=i, col=j)\n",
+        "\n",
+        "    j += 1\n",
+        "    if j > 5:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=800, barmode=\"stack\")\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lwuJwT0_FAmo"
+      },
+      "source": [
+        "### Per 90 Stats (Season-wise)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "n3nabjgdFA3e"
+      },
+      "source": [
+        "for col in num_cols:\n",
+        "    season_wise_meta_df[col + \"_p90\"] = season_wise_meta_df[col].divide(season_wise_meta_df[\"time\"]).multiply(90).round(2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "MF9oURUBFA3e"
+      },
+      "source": [
+        "per_90_cols = [col + \"_p90\" for col in num_cols if col != \"time\"]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "uZYfuIctFA3f"
+      },
+      "source": [
+        "len(per_90_cols)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "JK9EGWl_FOg0"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=3, cols=5,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=per_90_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in per_90_cols:\n",
+        "    cris_plot_data = season_wise_meta_df.loc[season_wise_meta_df[\"Player\"] == \"Cristiano\"]\n",
+        "    fig.add_trace(go.Bar(x=cris_plot_data[\"season\"],\n",
+        "                         y=cris_plot_data[col],\n",
+        "                         text=cris_plot_data[col],\n",
+        "                         textposition=\"inside\",\n",
+        "                         name=col + \"(Cris)\"),\n",
+        "                row=i, col=j)\n",
+        "    messi_plot_data = season_wise_meta_df.loc[season_wise_meta_df[\"Player\"] == \"Messi\"]\n",
+        "    fig.add_trace(go.Bar(x=messi_plot_data[\"season\"],\n",
+        "                        y=messi_plot_data[col],\n",
+        "                        text=messi_plot_data[col],\n",
+        "                        textposition=\"inside\",\n",
+        "                        name=col + \"(Messi)\"),\n",
+        "            row=i, col=j)\n",
+        "\n",
+        "    j += 1\n",
+        "    if j > 5:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=800, barmode=\"stack\")\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8prhlUP3g1Y8"
+      },
+      "source": [
+        "## On Shots Data"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "u68TinXtgVxN"
+      },
+      "source": [
+        "#### CA on Totals"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4V68BC78hBap"
+      },
+      "source": [
+        "shots_df.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "L4wiEJppg8xF"
+      },
+      "source": [
+        "shots_df[\"result\"].unique()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "07osTsOIM9fU"
+      },
+      "source": [
+        "shots_df.columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "E3yAjl7RM6a0"
+      },
+      "source": [
+        "shot_cols = [\"result\", \"situation\", \"shotType\"]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "KWsw9hiiOC5K"
+      },
+      "source": [
+        "plot_df = shots_df.groupby([\"Player\", \"result\"]).agg({\"result\": \"count\"})"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "JFoGXMeOOOew"
+      },
+      "source": [
+        "plot_df.name = \"total\""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "CkSC_KWRM5us"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=1, cols=3,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=shot_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in shot_cols:\n",
+        "    fig.add_trace(go.Histogram(x=cris_shots_df[col],\n",
+        "                               text=cris_shots_df[col],\n",
+        "                               name=col + \"(Cris)\"),\n",
+        "                  row=i, col=j)\n",
+        "    fig.add_trace(go.Histogram(x=messi_shots_df[col],\n",
+        "                            text=messi_shots_df[col],\n",
+        "                            name=col + \"(Messi)\"),\n",
+        "                row=i, col=j)\n",
+        "\n",
+        "    j += 1\n",
+        "    if j > 3:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=400, barmode=\"group\")\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "mW_tfaHbNTFi"
+      },
+      "source": [
+        "### CA on Per90"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "grryWrFwQPAp"
+      },
+      "source": [
+        "cris_time = total_df.loc[total_df[\"Player\"] == \"Cristiano\", \"time\"].item()\n",
+        "messi_time = total_df.loc[total_df[\"Player\"] == \"Messi\", \"time\"].item()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "TxFzq8BCQd2Q"
+      },
+      "source": [
+        "cris_time"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "XbK2hntfQs8U"
+      },
+      "source": [
+        "cris_shots_df[\"result\"].value_counts().reset_index()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZRLMeSp6Qf9o"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=1, cols=3,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=shot_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in shot_cols:\n",
+        "    cris_plot_df = cris_shots_df[col].value_counts().reset_index()\n",
+        "    cris_plot_df[col + \"_p90\"] = cris_plot_df[col].divide(cris_time).multiply(90).round(1)\n",
+        "    fig.add_trace(go.Bar(x=cris_plot_df[\"index\"],\n",
+        "                         y=cris_plot_df[col + \"_p90\"],\n",
+        "                         text=cris_plot_df[col + \"_p90\"],\n",
+        "                         textposition=\"inside\",\n",
+        "                         name=col),\n",
+        "                  row=i, col=j)\n",
+        "\n",
+        "    messi_plot_df = messi_shots_df[col].value_counts().reset_index()\n",
+        "    messi_plot_df[col + \"_p90\"] = messi_plot_df[col].divide(messi_time).multiply(90).round(1)\n",
+        "    fig.add_trace(go.Bar(x=messi_plot_df[\"index\"],\n",
+        "                         y=messi_plot_df[col + \"_p90\"],\n",
+        "                         text=messi_plot_df[col + \"_p90\"],\n",
+        "                         textposition=\"inside\",\n",
+        "                         name=col),\n",
+        "                  row=i, col=j)\n",
+        "\n",
+        "    j += 1\n",
+        "    if j > 3:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=400, barmode=\"group\")\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "l3wgV4CANZXy"
+      },
+      "source": [
+        "### CA on Percentages"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "SFOQ9_GFS_jg"
+      },
+      "source": [
+        "i = j = 1\n",
+        "# Create an empty subplot:\n",
+        "fig = make_subplots(rows=1, cols=3,\n",
+        "                    shared_xaxes=False,\n",
+        "                    vertical_spacing=0.1,\n",
+        "                    subplot_titles=shot_cols)\n",
+        "# Add bar plot for goals conceded in all subplots:\n",
+        "for col in shot_cols:\n",
+        "    cris_plot_df = cris_shots_df[col].value_counts(normalize=True).multiply(100).round(1).reset_index()\n",
+        "    fig.add_trace(go.Bar(x=cris_plot_df[\"index\"],\n",
+        "                         y=cris_plot_df[col],\n",
+        "                         text=cris_plot_df[col].apply(lambda x: '{0:1.2f}%'.format(x)),\n",
+        "                         textposition=\"inside\",\n",
+        "                         name=col + \"(Cris)\"),\n",
+        "                  row=i, col=j)\n",
+        "\n",
+        "    messi_plot_df = messi_shots_df[col].value_counts(normalize=True).multiply(100).round(1).reset_index()\n",
+        "    fig.add_trace(go.Bar(x=messi_plot_df[\"index\"],\n",
+        "                         y=messi_plot_df[col],\n",
+        "                         text=messi_plot_df[col].apply(lambda x: '{0:1.2f}%'.format(x)),\n",
+        "                         textposition=\"inside\",\n",
+        "                         name=col+ \"(Messi)\"),\n",
+        "                  row=i, col=j)\n",
+        "\n",
+        "    j += 1\n",
+        "    if j > 3:\n",
+        "        j = 1\n",
+        "        i += 1\n",
+        "fig.update_layout(height=400, barmode=\"group\",\n",
+        "                  plot_bgcolor=\"#383838\",\n",
+        "                  template=\"plotly_dark\")\n",
+        "fig.update_xaxes(showgrid=False)\n",
+        "fig.update_yaxes(showgrid=False)\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zl7OxTmrN6mA"
+      },
+      "source": [
+        "# ================== Debate - 1st Round =================="
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hUDGISljNdOn"
+      },
+      "source": [
+        "# Trivia Time! "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4c6BCVUtmwU8"
+      },
+      "source": [
+        "fig = px.histogram(data_frame=shots_df, x=\"player_assisted\", color=\"Player\",\n",
+        "             barmode=\"group\", title=\"Assisting Player Comparison\",\n",
+        "             labels={\"result\": \"\", \"count\": \"\"})\n",
+        "fig.update_layout(xaxis={\"tickmode\": \"linear\"})"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1j_jCSu6NxmT"
+      },
+      "source": [
+        "# Shot Analysis"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "deyEPp0r18AT"
+      },
+      "source": [
+        "## Data Preparation"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ABGUaZHLkj3Q"
+      },
+      "source": [
+        "!pip install mplsoccer"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_rVN30nJkhPT"
+      },
+      "source": [
+        "import mplsoccer"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "83lLgaBfku9o"
+      },
+      "source": [
+        "pitch = mplsoccer.Pitch(pitch_type=\"wyscout\")\n",
+        "fig, ax = pitch.draw(figsize=(14, 6))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "gBRUxVwaQcUz"
+      },
+      "source": [
+        "shots_df[\"X\"] = shots_df[\"X\"].multiply(100)\n",
+        "shots_df[\"Y\"] = shots_df[\"Y\"].multiply(100)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "FcexNkLMf90K"
+      },
+      "source": [
+        "crisPlotData = shots_df[shots_df[\"Player\"] == \"Cristiano\"].copy(deep=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "h8iGmZ0Cf9Tz"
+      },
+      "source": [
+        "messiPlotData = shots_df[shots_df[\"Player\"] == \"Messi\"].copy(deep=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "T_GeVFz31_OT"
+      },
+      "source": [
+        "## Plot HeatMaps"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "MB0Kv60ds_u8"
+      },
+      "source": [
+        "from scipy.ndimage import gaussian_filter"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Ny8cD-hzsZKo"
+      },
+      "source": [
+        "pitch = mplsoccer.VerticalPitch(pitch_type=\"wyscout\",\n",
+        "                                line_color='white',\n",
+        "                                line_zorder=2,\n",
+        "                                pitch_color='#101010',\n",
+        "                                half=True)\n",
+        "fig, ax = pitch.draw(figsize=(8, 8))\n",
+        "bin_statistic = pitch.bin_statistic(crisPlotData[\"X\"],\n",
+        "                                    crisPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Cristiano Shot HeatMap\", fontsize=30)\n",
+        "fig.savefig(\"cristiano_shot_map.png\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ttrRXtijwN8d"
+      },
+      "source": [
+        "pitch = mplsoccer.VerticalPitch(pitch_type=\"wyscout\",\n",
+        "                                line_color='white',\n",
+        "                                line_zorder=2,\n",
+        "                                pitch_color='#101010',\n",
+        "                                half=True)\n",
+        "fig, ax = pitch.draw(figsize=(8, 8))\n",
+        "bin_statistic = pitch.bin_statistic(messiPlotData[\"X\"],\n",
+        "                                    messiPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Messi Shot HeatMap\", fontsize=30)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "wLrPtGbaxgL6"
+      },
+      "source": [
+        "pitch = mplsoccer.VerticalPitch(pitch_type=\"wyscout\",\n",
+        "                                line_color='white',\n",
+        "                                line_zorder=2,\n",
+        "                                pitch_color='#101010',\n",
+        "                                half=True)\n",
+        "fig, axs = pitch.grid(nrows=1, ncols=2,\n",
+        "                     endnote_height=0.03, endnote_space=0,\n",
+        "                      grid_width=0.88, left=0.025,\n",
+        "                      title_height=0.06, title_space=0,\n",
+        "                      axis=False,\n",
+        "                      grid_height=0.86)\n",
+        "\n",
+        "# Cristiano:\n",
+        "ax = axs[\"pitch\"][0]\n",
+        "bin_statistic = pitch.bin_statistic(crisPlotData[\"X\"],\n",
+        "                                    crisPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Cristiano Shot HeatMap\", fontsize=30)\n",
+        "\n",
+        "# Messi:\n",
+        "ax = axs[\"pitch\"][1]\n",
+        "bin_statistic = pitch.bin_statistic(messiPlotData[\"X\"],\n",
+        "                                    messiPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Messi Shot HeatMap\", fontsize=30)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VS_Scc0QhFJ5"
+      },
+      "source": [
+        "shots_df.situation.unique()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "XX-sw8o50t5y"
+      },
+      "source": [
+        "\"\"\" Shot Heatmaps (excluding penalties) \"\"\"\n",
+        "wopCrisPlotData = crisPlotData.loc[crisPlotData[\"situation\"] == \"OpenPlay\"].copy(deep=True)\n",
+        "wopMessiPlotData = messiPlotData.loc[messiPlotData[\"situation\"] == \"OpenPlay\"].copy(deep=True)\n",
+        "\n",
+        "pitch = mplsoccer.VerticalPitch(pitch_type=\"wyscout\",\n",
+        "                                line_color='white',\n",
+        "                                line_zorder=2,\n",
+        "                                pitch_color='#101010',\n",
+        "                                half=True)\n",
+        "fig, axs = pitch.grid(nrows=1, ncols=2,\n",
+        "                     endnote_height=0.03, endnote_space=0,\n",
+        "                      grid_width=0.88, left=0.025,\n",
+        "                      title_height=0.06, title_space=0,\n",
+        "                      axis=False,\n",
+        "                      grid_height=0.86)\n",
+        "\n",
+        "# Cristiano:\n",
+        "ax = axs[\"pitch\"][0]\n",
+        "bin_statistic = pitch.bin_statistic(wopCrisPlotData[\"X\"],\n",
+        "                                    wopCrisPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Cristiano Shot HeatMap\", fontsize=30)\n",
+        "\n",
+        "# Messi:\n",
+        "ax = axs[\"pitch\"][1]\n",
+        "bin_statistic = pitch.bin_statistic(wopMessiPlotData[\"X\"],\n",
+        "                                    wopMessiPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Messi Shot HeatMap\", fontsize=30)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "dWG2eicY1lin"
+      },
+      "source": [
+        "\"\"\" Shot Heatmaps (including and excluding penalties) \"\"\"\n",
+        "pitch = mplsoccer.VerticalPitch(pitch_type=\"wyscout\",\n",
+        "                                line_color='white',\n",
+        "                                line_zorder=2,\n",
+        "                                pitch_color='#101010',\n",
+        "                                half=True)\n",
+        "fig, axs = pitch.grid(nrows=2, ncols=2,\n",
+        "                      endnote_height=0.01, endnote_space=0,\n",
+        "                      grid_width=0.95, left=0.02,\n",
+        "                      title_height=0.04, title_space=0,\n",
+        "                      axis=False,\n",
+        "                      grid_height=0.95)\n",
+        "\n",
+        "# Cristiano with pen:\n",
+        "ax = axs[\"pitch\"][0, 0]\n",
+        "bin_statistic = pitch.bin_statistic(crisPlotData[\"X\"],\n",
+        "                                    crisPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Cristiano Shot HeatMap (All Shots)\", fontsize=20)\n",
+        "\n",
+        "# Messi with pen:\n",
+        "ax = axs[\"pitch\"][0, 1]\n",
+        "bin_statistic = pitch.bin_statistic(messiPlotData[\"X\"],\n",
+        "                                    messiPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Messi Shot HeatMap (All Shots)\", fontsize=20)\n",
+        "\n",
+        "# Cristiano without pen:\n",
+        "ax = axs[\"pitch\"][1, 0]\n",
+        "bin_statistic = pitch.bin_statistic(wopCrisPlotData[\"X\"],\n",
+        "                                    wopCrisPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Cristiano Shot HeatMap (w/o Pens)\", fontsize=20)\n",
+        "\n",
+        "# Messi wo pen:\n",
+        "ax = axs[\"pitch\"][1, 1]\n",
+        "bin_statistic = pitch.bin_statistic(wopMessiPlotData[\"X\"],\n",
+        "                                    wopMessiPlotData[\"Y\"],\n",
+        "                                    statistic='count', bins=(35, 35))\n",
+        "bin_statistic['statistic'] = gaussian_filter(bin_statistic['statistic'], 1)\n",
+        "pcm = pitch.heatmap(bin_statistic, ax=ax,\n",
+        "                    cmap='coolwarm', edgecolors='#22312b')\n",
+        "ax.set_title(\"Messi Shot HeatMap (w/o Pens)\", fontsize=20)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HZ4eqz0mo6wW"
+      },
+      "source": [
+        "# Distance Analysis"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "EtCVVd1nhndi"
+      },
+      "source": [
+        "## Per 90 Columns"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Des5wvbNiBkB"
+      },
+      "source": [
+        "season_wise_meta_df.columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "kmFBN5tgiOJ2"
+      },
+      "source": [
+        "num_cols"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "aAPsnQ5zhrhm"
+      },
+      "source": [
+        "for col in num_cols:\n",
+        "    season_wise_meta_df[col + \"_p90\"] = season_wise_meta_df[col].divide(season_wise_meta_df[\"time\"]).multiply(90).round(2)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "W9RKXNnr1iGT"
+      },
+      "source": [
+        "## Goals vs Shots (per season)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Um_MjJcqkEm1"
+      },
+      "source": [
+        "season_wise_meta_df.columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "jG8quZUtz2sC"
+      },
+      "source": [
+        "x = \"shots_p90\"; y=\"goals_p90\"\n",
+        "fig = px.scatter(x=x, y=y, data_frame=season_wise_meta_df,\n",
+        "                 hover_name=\"season\", text=\"Player\", symbol=\"season\", color=\"season\", size=\"npg_p90\",\n",
+        "                 opacity=.8)\n",
+        "fig.add_trace(go.Scatter(x=[season_wise_meta_df[x].min(), season_wise_meta_df[x].max()],\n",
+        "                         y=[season_wise_meta_df[y].mean(), season_wise_meta_df[y].mean()],\n",
+        "                         name=\"Avg. Goals\"))\n",
+        "fig.add_trace(go.Scatter(x=[season_wise_meta_df[x].mean(), season_wise_meta_df[x].mean()],\n",
+        "                         y=[season_wise_meta_df[y].min(), season_wise_meta_df[y].max()],\n",
+        "                         name=\"Avg. Shots\"))\n",
+        "fig.update_traces(textposition='top center', textfont_size=10)\n",
+        "fig.update_layout(showlegend=True, height=700, width=1200)\n",
+        "fig.update(layout_coloraxis_colorbar_len=0.5, layout_coloraxis_colorbar_y=0.4)\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hlw7uOnOSfCc"
+      },
+      "source": [
+        "## Total Goals vs Total Expected Goals (per season)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Lyl640nE-nrU"
+      },
+      "source": [
+        "x_col=\"goals_p90\"; y_col=\"xG_p90\"\n",
+        "fig = px.scatter(y=y_col, x=x_col, data_frame=season_wise_meta_df,\n",
+        "                 hover_name=\"season\", text=\"Player\", symbol=\"season\",\n",
+        "                 opacity=.8)\n",
+        "fig.add_trace(go.Scatter(x=[season_wise_meta_df[[x_col, y_col]].min().min(),\n",
+        "                            season_wise_meta_df[[x_col, y_col]].max().max()],\n",
+        "                         y=[season_wise_meta_df[[x_col, y_col]].min().min(),\n",
+        "                            season_wise_meta_df[[x_col, y_col]].max().max()]))\n",
+        "fig.update_traces(textposition='top center', textfont_size=10, marker=dict(size=10))\n",
+        "fig.update_layout(showlegend=True, height=700, width=1000)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "w21Hy21O2G3h"
+      },
+      "source": [
+        "# The Final Comparison"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "56p4vRFBRBs3"
+      },
+      "source": [
+        "season_wise_meta_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "l9Ys8o9xRGSg"
+      },
+      "source": [
+        "radar_df = season_wise_meta_df.groupby([\"Player\"])[num_cols].sum().reset_index()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "kjjLWqmHRIAZ"
+      },
+      "source": [
+        "radar_df"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "afBdu3stPACi"
+      },
+      "source": [
+        "radar_df.columns"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "b5pMWaMoPCYx"
+      },
+      "source": [
+        "cols_for_radar = ['goals', 'shots', 'xG', 'xGDiff',\n",
+        "                  'assists', 'xA', 'key_passes',\n",
+        "                  'npg', 'npxG', 'goal_contrib', 'xgoal_contrib', 'shot_contrib']"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tQNyOpVX2Qhu"
+      },
+      "source": [
+        "## Radar Plot for Comparison Analysis"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "dtdKcGsAzTMb"
+      },
+      "source": [
+        "# Initiate the plotly go figure\n",
+        "fig = go.Figure()\n",
+        "# Add Radar plots for different players:\n",
+        "fig.add_trace(go.Scatterpolar(\n",
+        "    r=radar_df.loc[(radar_df[\"Player\"] == \"Cristiano\"), cols_for_radar].values.flatten(),\n",
+        "    theta=cols_for_radar,\n",
+        "    fill='toself',\n",
+        "    name='Cristiano'))\n",
+        "fig.add_trace(go.Scatterpolar(\n",
+        "    r=radar_df.loc[(radar_df[\"Player\"] == \"Messi\"), cols_for_radar].values.flatten(),\n",
+        "    theta=cols_for_radar,\n",
+        "    fill='toself',\n",
+        "    name=\"Messi\"))\n",
+        "# Additional properties for the plot:\n",
+        "fig.update_layout(\n",
+        "    title=\"Cristiano vs Messi\",\n",
+        "polar=dict(\n",
+        "    radialaxis=dict(\n",
+        "    visible=True,\n",
+        "    )),\n",
+        "showlegend=True,\n",
+        "template=\"plotly_dark\"\n",
+        ")\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7ouEFcpRPwNS"
+      },
+      "source": [
+        "## Per90 Radar Plot"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vq4wisRmllKO"
+      },
+      "source": [
+        "per_90_cols"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "L9F6eAdgPytf"
+      },
+      "source": [
+        "cols_for_radar = ['goals_p90',\n",
+        " 'shots_p90',\n",
+        " 'xG_p90',\n",
+        " 'xGDiff_p90',\n",
+        " 'assists_p90',\n",
+        " 'xA_p90',\n",
+        " 'key_passes_p90',\n",
+        " 'npg_p90',\n",
+        " 'npxG_p90',\n",
+        " 'goal_contrib_p90',\n",
+        " 'xgoal_contrib_p90',\n",
+        " 'shot_contrib_p90']"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "G1VmvZqRQyzS"
+      },
+      "source": [
+        "radar_df = season_wise_meta_df.groupby([\"Player\"])[cols_for_radar].sum().reset_index()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Knsn1KBJQ91Q"
+      },
+      "source": [
+        "# Initiate the plotly go figure\n",
+        "fig = go.Figure()\n",
+        "# Add Radar plots for different players:\n",
+        "fig.add_trace(go.Scatterpolar(\n",
+        "    r=radar_df.loc[(radar_df[\"Player\"] == \"Cristiano\"), cols_for_radar].sum(),\n",
+        "    theta=cols_for_radar,\n",
+        "    fill='toself',\n",
+        "    name='Cristiano'))\n",
+        "fig.add_trace(go.Scatterpolar(\n",
+        "    r=radar_df.loc[(radar_df[\"Player\"] == \"Messi\"), cols_for_radar].sum(),\n",
+        "    theta=cols_for_radar,\n",
+        "    fill='toself',\n",
+        "    name=\"Messi\"))\n",
+        "# Additional properties for the plot:\n",
+        "fig.update_layout(\n",
+        "    title=\"Cristiano vs Messi\",\n",
+        "polar=dict(\n",
+        "    radialaxis=dict(\n",
+        "    visible=True,\n",
+        "    )),\n",
+        "showlegend=True,\n",
+        "template=\"plotly_dark\"\n",
+        ")\n",
+        "fig.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "c5AtNbgZIgzt"
+      },
+      "source": [
+        "# ================== Debate - 2nd Round ==================\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "IJDaB_ukRxU5"
+      },
+      "source": [
+        "# Who Won?"
+      ]
+    }
+  ]
+}
